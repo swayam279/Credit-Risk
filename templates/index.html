@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Risk Predictor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .assumed-tag {
+            font-size: 0.7rem;
+            font-weight: 500;
+            margin-left: 8px;
+            padding: 2px 6px;
+            border-radius: 9999px;
+            background-color: #e5e7eb;
+            color: #4b5563;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Explainable AI Credit Risk Predictor</h1>
+            <p class="text-md text-gray-600 mt-2">Enter your details to get a real-time loan default prediction and explanation.</p>
+        </header>
+
+        <main class="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
+            <form id="credit-form" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                
+                <div>
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Financial Information</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="amt-income" class="block text-sm font-medium text-gray-700">Total Annual Income</label>
+                            <input type="number" id="amt-income" name="AMT_INCOME_TOTAL" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required value="135000">
+                        </div>
+                        <div>
+                            <label for="amt-credit" class="block text-sm font-medium text-gray-700">Loan Amount (Credit)</label>
+                            <input type="number" id="amt-credit" name="AMT_CREDIT" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required value="500000">
+                        </div>
+                        <div>
+                            <label for="amt-annuity" class="block text-sm font-medium text-gray-700">Loan Annuity (Monthly Payment)</label>
+                            <input type="number" id="amt-annuity" name="AMT_ANNUITY" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required value="25000">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Personal Information</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="dob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                            <input type="date" id="dob" name="DOB" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required value="1984-05-16">
+                        </div>
+                        <div>
+                             <label for="years-employed" class="block text-sm font-medium text-gray-700">Years Employed</label>
+                            <input type="number" id="years-employed" name="YEARS_EMPLOYED" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 5" required value="5">
+                        </div>
+                        <div>
+                            <label for="education" class="block text-sm font-medium text-gray-700">Education Level</label>
+                            <select id="education" name="NAME_EDUCATION_TYPE" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md">
+                                <option>Higher education</option>
+                                <option>Secondary / secondary special</option>
+                                <option>Incomplete higher</option>
+                                <option>Lower secondary</option>
+                                <option>Academic degree</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 pt-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Gender</label>
+                        <div class="mt-2 flex space-x-4">
+                            <label class="inline-flex items-center"><input type="radio" name="CODE_GENDER" value="F" class="form-radio" checked> <span class="ml-2">Female</span></label>
+                            <label class="inline-flex items-center"><input type="radio" name="CODE_GENDER" value="M" class="form-radio"> <span class="ml-2">Male</span></label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Owns a Car?</label>
+                        <div class="mt-2 flex space-x-4">
+                            <label class="inline-flex items-center"><input type="radio" name="FLAG_OWN_CAR" value="N" class="form-radio" checked> <span class="ml-2">No</span></label>
+                            <label class="inline-flex items-center"><input type="radio" name="FLAG_OWN_CAR" value="Y" class="form-radio"> <span class="ml-2">Yes</span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2 text-center mt-4">
+                    <button type="submit" id="submit-btn" class="inline-flex items-center justify-center w-full md:w-1/2 px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                        Predict Risk
+                    </button>
+                </div>
+            </form>
+        </main>
+        
+        <section id="results-section" class="mt-8 bg-white p-6 md:p-8 rounded-2xl shadow-lg hidden">
+             <!-- Results content will be inserted here by JavaScript -->
+        </section>
+
+    </div>
+
+    <script>
+        const form = document.getElementById('credit-form');
+        const resultsSection = document.getElementById('results-section');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            resultsSection.classList.remove('hidden');
+            resultsSection.innerHTML = `<h2 class="text-2xl font-bold mb-4 text-gray-800 border-b pb-2">Prediction Results</h2><div id="loader" class="flex justify-center items-center my-8"><div class="loader"></div><p class="ml-4 text-gray-600">Analyzing data...</p></div>`;
+            
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Analyzing...';
+            
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            data.AMT_INCOME_TOTAL = parseFloat(data.AMT_INCOME_TOTAL);
+            data.AMT_CREDIT = parseFloat(data.AMT_CREDIT);
+            data.AMT_ANNUITY = parseFloat(data.AMT_ANNUITY);
+            data.YEARS_EMPLOYED = parseInt(data.YEARS_EMPLOYED);
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || `HTTP error! status: ${response.status}`);
+                displayResults(result);
+
+            } catch (error) {
+                displayError(error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Predict Risk';
+            }
+        });
+
+        function displayResults(data) {
+            const probability = parseFloat(data.default_probability);
+            const percentage = (probability * 100).toFixed(2);
+            let positiveFactorsHTML = '';
+            let negativeFactorsHTML = '';
+
+            data.explanation.factors_increasing_risk.forEach(factor => {
+                let tag = !factor.is_user_provided ? `<span class="assumed-tag">Assumed Average</span>` : '';
+                positiveFactorsHTML += `<li>${factor.feature} (Impact: ${factor.value})${tag}</li>`;
+            });
+            if (positiveFactorsHTML === '') positiveFactorsHTML = '<li>No significant factors found.</li>';
+
+            data.explanation.factors_decreasing_risk.forEach(factor => {
+                let tag = !factor.is_user_provided ? `<span class="assumed-tag">Assumed Average</span>` : '';
+                negativeFactorsHTML += `<li>${factor.feature} (Impact: ${factor.value})${tag}</li>`;
+            });
+            if (negativeFactorsHTML === '') negativeFactorsHTML = '<li>No significant factors found.</li>';
+
+            let gaugeColor = '#22c55e'; // green
+            if (probability > 0.5) gaugeColor = '#ef4444'; // red
+            else if (probability > 0.2) gaugeColor = '#f59e0b'; // amber
+
+            resultsSection.innerHTML = `
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 border-b pb-2">Prediction Results</h2>
+                <div id="results-content">
+                     <div class="bg-gray-100 p-4 rounded-lg mb-6">
+                        <h3 class="font-semibold text-lg text-gray-900">Summary</h3>
+                        <p class="text-gray-700 mt-1">${data.summary}</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                        <div class="text-center">
+                            <h3 class="font-semibold text-lg text-gray-900">Default Probability</h3>
+                            <div class="relative w-48 h-24 mx-auto mt-4">
+                                <svg class="w-full h-full" viewBox="0 0 100 50">
+                                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#e5e7eb" stroke-width="10"></path>
+                                    <path style="stroke: ${gaugeColor}; stroke-dashoffset: ${125.6 * (1 - probability)};" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="10" stroke-dasharray="125.6"></path>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center top-6 text-2xl font-bold text-gray-900">${percentage}%</div>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <h3 class="font-semibold text-lg text-gray-900">Factors Increasing Risk 📈</h3>
+                                <ul class="list-disc list-inside mt-2 text-red-600 space-y-1">${positiveFactorsHTML}</ul>
+                            </div>
+                             <div>
+                                <h3 class="font-semibold text-lg text-gray-900">Factors Decreasing Risk 📉</h3>
+                                <ul class="list-disc list-inside mt-2 text-green-600 space-y-1">${negativeFactorsHTML}</ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="md:col-span-2 mt-6 pt-4 border-t text-center text-xs text-gray-500">
+                        <strong>Note:</strong> This prediction uses the information you provided and assumes an average profile for other factors (e.g., external credit scores) which are not known.
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayError(message) {
+            resultsSection.innerHTML = `
+                <h2 class="text-2xl font-bold mb-4 text-gray-800 border-b pb-2">Prediction Results</h2>
+                <div class="text-center text-red-600 bg-red-100 p-4 rounded-lg">An error occurred: ${message}</div>
+            `;
+        }
+    </script>
+</body>
+</html>
