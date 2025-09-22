@@ -19,11 +19,11 @@ try:
     with open(MODEL_DIR / 'scaler.pkl', 'rb') as f:
         scaler = pickle.load(f)
     with open(MODEL_DIR / 'train_cols.pkl', 'rb') as f:
-        train_cols = pickle.load(f)
+        train_cols = pickle.load(f) # The one-hot encoded column names
     with open(MODEL_DIR / 'categorical_cols.pkl', 'rb') as f:
         categorical_cols = pickle.load(f)
     with open(MODEL_DIR / 'final_model_columns.pkl', 'rb') as f:
-        final_model_columns = pickle.load(f)
+        final_model_columns = pickle.load(f) # The final full list of columns
     with open(MODEL_DIR / 'xgb_model.pkl', 'rb') as f:
         model = pickle.load(f)
 except FileNotFoundError as e:
@@ -31,6 +31,7 @@ except FileNotFoundError as e:
 
 explainer = shap.TreeExplainer(model)
 
+# --- GLOBAL CONSTANTS ---
 FEATURE_MAP = {
     "AMT_GOODS_PRICE": "Price of Goods", "AMT_INCOME_TOTAL": "Total Income",
     "CREDIT_TERM": "Loan Duration", "DAYS_EMPLOYED": "Years Employed",
@@ -62,60 +63,50 @@ def predict():
     try:
         input_data = request.get_json()
         
-        # --- NEW: Improved Business Logic Guardrails ---
-        total_income = input_data.get('AMT_INCOME_TOTAL', 0)
-        annuity = input_data.get('AMT_ANNUITY', 0)
-        
-        if total_income <= 0:
-            return jsonify({"error": "Total income must be a positive value."}), 400
-        
-        monthly_income = total_income / 12
-        if annuity > monthly_income:
-            return jsonify({"error": "Monthly payment cannot be greater than calculated monthly income."}), 400
-
-        input_data.setdefault('FLAG_OWN_REALTY', 'Y')
-        input_data.setdefault('CNT_CHILDREN', 0)
-        
+        # --- Create a single row DataFrame from user input ---
         user_input_df = pd.DataFrame([input_data])
 
-        # Data Conversion & Feature Engineering
+        # --- Data Conversion & Feature Engineering ---
         dob = datetime.strptime(user_input_df['DOB'].iloc[0], '%Y-%m-%d')
         user_input_df['DAYS_BIRTH'] = (dob - datetime.now()).days
         
         years_employed = user_input_df.pop('YEARS_EMPLOYED')
         user_input_df['DAYS_EMPLOYED'] = years_employed * -365
 
-        engineered_features = ['CREDIT_INCOME_RATIO', 'ANNUITY_INCOME_RATIO', 'CREDIT_TERM']
-        user_input_df[engineered_features[0]] = user_input_df['AMT_CREDIT'] / user_input_df['AMT_INCOME_TOTAL']
-        user_input_df[engineered_features[1]] = user_input_df['AMT_ANNUITY'] / user_input_df['AMT_INCOME_TOTAL']
-        user_input_df[engineered_features[2]] = user_input_df['AMT_ANNUITY'] / user_input_df['AMT_CREDIT']
+        user_input_df.loc[:, 'CREDIT_INCOME_RATIO'] = user_input_df['AMT_CREDIT'] / user_input_df['AMT_INCOME_TOTAL']
+        user_input_df.loc[:, 'ANNUITY_INCOME_RATIO'] = user_input_df['AMT_ANNUITY'] / user_input_df['AMT_INCOME_TOTAL']
+        user_input_df.loc[:, 'CREDIT_TERM'] = user_input_df['AMT_ANNUITY'] / user_input_df['AMT_CREDIT']
         
-        # Preprocessing Pipeline
+        # --- Preprocessing Pipeline ---
+        # 1. Start with an empty DataFrame with all expected final columns, filled with 0s
+        input_processed = pd.DataFrame(columns=final_model_columns, index=[0]).fillna(0)
+        
+        # 2. Process and place numerical features
         numeric_cols_original = imputer.feature_names_in_.tolist()
-        
-        pipeline_df = pd.DataFrame(columns=numeric_cols_original + categorical_cols, index=[0])
-        pipeline_df.update(user_input_df)
+        engineered_features = ['CREDIT_INCOME_RATIO', 'ANNUITY_INCOME_RATIO', 'CREDIT_TERM']
+        all_numeric_cols = numeric_cols_original + engineered_features
 
-        numeric_part = pipeline_df[numeric_cols_original]
-        categorical_part = pipeline_df[categorical_cols]
-        engineered_part_df = pipeline_df[engineered_features]
+        temp_numeric_df = pd.DataFrame(columns=all_numeric_cols, index=[0])
+        temp_numeric_df.update(user_input_df)
 
-        numeric_imputed = imputer.transform(numeric_part)
-        numeric_scaled = scaler.transform(numeric_imputed)
-        numeric_scaled_df = pd.DataFrame(numeric_scaled, columns=numeric_cols_original)
+        temp_numeric_df[numeric_cols_original] = imputer.transform(temp_numeric_df[numeric_cols_original])
+        temp_numeric_df.fillna(0, inplace=True) # Fill NaNs from division by zero
+        temp_numeric_df[all_numeric_cols] = scaler.transform(temp_numeric_df[all_numeric_cols])
         
-        engineered_part_df.fillna(0, inplace=True)
+        # 3. Process and place categorical features
+        temp_cat_df = pd.DataFrame(columns=categorical_cols, index=[0])
+        temp_cat_df.update(user_input_df)
+        temp_cat_encoded = pd.get_dummies(temp_cat_df)
+        temp_cat_final = temp_cat_encoded.reindex(columns=train_cols, fill_value=0)
 
-        categorical_encoded = pd.get_dummies(categorical_part)
-        categorical_final = categorical_encoded.reindex(columns=train_cols, fill_value=0)
-
-        final_df = pd.concat([numeric_scaled_df, engineered_part_df, categorical_final], axis=1)
-        final_df = final_df.loc[:,~final_df.columns.duplicated()]
+        # 4. Combine all parts into the final DataFrame
+        final_df_parts = pd.concat([temp_numeric_df, temp_cat_final], axis=1)
+        final_df_parts.columns = ["".join (c if c.isalnum() else '_' for c in str(x)) for x in final_df_parts.columns]
         
-        final_df.columns = ["".join (c if c.isalnum() else '_' for c in str(x)) for x in final_df.columns]
-        input_processed = final_df.reindex(columns=final_model_columns, fill_value=0)
+        # Update the main processed DataFrame
+        input_processed.update(final_df_parts)
         
-        # Prediction and Explanation
+        # --- Prediction and Explanation ---
         prediction_proba = model.predict_proba(input_processed)[:, 1]
         shap_values = explainer.shap_values(input_processed)
         
