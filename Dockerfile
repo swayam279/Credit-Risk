@@ -7,7 +7,7 @@ COPY Requirements.txt .
 
 # 4. Install the Python dependencies
 # --no-cache-dir makes the image smaller
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r Requirements.txt
 
 # 5. Copy the rest of your application code into the container
 COPY . .
