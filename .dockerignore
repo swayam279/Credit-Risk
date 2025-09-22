@@ -1,0 +1,22 @@
+# In your .dockerignore file
+
+# Ignore Git directory
+.git/
+.gitignore
+
+# Ignore VS Code settings
+.vscode/
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore Python virtual environment if you have one
+venv/
+*.venv/
+
+# Ignore the raw data and notebooks, as they are not needed by the final app
+Data/
+Codebase/
+upload_to_mongodb.py
