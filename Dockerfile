@@ -1,13 +1,9 @@
-# In your Dockerfile
-
 # 1. Start from a lean, official Python base image
 FROM python:3.9-slim
-
 # 2. Set the working directory inside the container
 WORKDIR /app
-
 # 3. Copy the requirements file first to leverage Docker's layer caching
-COPY requirements.txt .
+COPY Requirements.txt .
 
 # 4. Install the Python dependencies
 # --no-cache-dir makes the image smaller
