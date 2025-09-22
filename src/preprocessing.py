@@ -1,5 +1,3 @@
-# In your src/preprocessing.py file
-
 import pandas as pd
 import numpy as np
 from sklearn.impute import SimpleImputer
