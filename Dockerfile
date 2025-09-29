@@ -1,5 +1,3 @@
-# In your Dockerfile
-
 # 1. Start from a lean, official Python base image
 FROM python:3.9-slim
 
@@ -19,5 +17,4 @@ COPY . .
 EXPOSE 7860
 
 # 7. Define the command to start the Flask application using Gunicorn
-# This is a production-ready command.
 CMD ["gunicorn", "--bind", "0.0.0.0:7860", "--workers", "1", "app:app"]
