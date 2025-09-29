@@ -29,8 +29,7 @@ try:
 except FileNotFoundError as e:
     raise RuntimeError(f"Model artifact not found. Error: {e}")
 
-# Initialize the explainer as None for lazy loading
-explainer = None
+explainer = None # For lazy loading
 
 # --- GLOBAL CONSTANTS ---
 FEATURE_MAP = {
@@ -66,26 +65,24 @@ def predict():
     global explainer 
 
     try:
-        # Lazily load the SHAP explainer on the first request
         if explainer is None:
-            print("Creating SHAP explainer for the first time...")
             explainer = shap.TreeExplainer(model)
-            print("SHAP explainer created.")
 
         input_data = request.get_json()
         
-        # --- THE MISSING PIECE: Business Logic Guardrails ---
+        # --- NEW: Expanded Business Logic Guardrails ---
+        if input_data.get('AMT_INCOME_TOTAL', -1) < 0 or \
+           input_data.get('AMT_CREDIT', -1) < 0 or \
+           input_data.get('AMT_ANNUITY', -1) < 0 or \
+           input_data.get('YEARS_EMPLOYED', -1) < 0:
+            return jsonify({"error": "Entered values cannot be negative."}), 400
+
         total_income = input_data.get('AMT_INCOME_TOTAL', 0)
         annuity = input_data.get('AMT_ANNUITY', 0)
         
-        if total_income <= 0:
-            return jsonify({"error": "Total annual income must be a positive value."}), 400
+        if total_income > 0 and (annuity * 12) > total_income:
+            return jsonify({"error": "Total annual payments cannot be greater than total annual income."}), 400
         
-        monthly_income = total_income / 12
-        if annuity > monthly_income:
-            return jsonify({"error": "Monthly payment cannot be greater than monthly income."}), 400
-        
-        # Add default values for fields not on the form
         input_data.setdefault('FLAG_OWN_REALTY', 'Y')
         input_data.setdefault('CNT_CHILDREN', 0)
         

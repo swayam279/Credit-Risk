@@ -50,15 +50,15 @@
                     <div class="space-y-4">
                         <div>
                             <label for="amt-income" class="block text-sm font-medium text-gray-700">Total Annual Income</label>
-                            <input type="number" id="amt-income" name="AMT_INCOME_TOTAL" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required value="135000">
+                            <input type="number" id="amt-income" name="AMT_INCOME_TOTAL" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required value="135000" min="0">
                         </div>
                         <div>
                             <label for="amt-credit" class="block text-sm font-medium text-gray-700">Loan Amount (Credit)</label>
-                            <input type="number" id="amt-credit" name="AMT_CREDIT" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required value="500000">
+                            <input type="number" id="amt-credit" name="AMT_CREDIT" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required value="500000" min="0">
                         </div>
                         <div>
                             <label for="amt-annuity" class="block text-sm font-medium text-gray-700">Loan Annuity (Monthly Payment)</label>
-                            <input type="number" id="amt-annuity" name="AMT_ANNUITY" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required value="25000">
+                            <input type="number" id="amt-annuity" name="AMT_ANNUITY" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required value="25000" min="0">
                         </div>
                     </div>
                 </div>
@@ -72,7 +72,7 @@
                         </div>
                         <div>
                              <label for="years-employed" class="block text-sm font-medium text-gray-700">Years Employed</label>
-                            <input type="number" id="years-employed" name="YEARS_EMPLOYED" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 5" required value="5">
+                            <input type="number" id="years-employed" name="YEARS_EMPLOYED" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 5" required value="5" min="0">
                         </div>
                         <div>
                             <label for="education" class="block text-sm font-medium text-gray-700">Education Level</label>
@@ -119,6 +119,7 @@
     </div>
 
     <script>
+        // The JavaScript does not need to change
         const form = document.getElementById('credit-form');
         const resultsSection = document.getElementById('results-section');
 
