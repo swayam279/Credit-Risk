@@ -29,7 +29,7 @@ try:
 except FileNotFoundError as e:
     raise RuntimeError(f"Model artifact not found. Error: {e}")
 
-# --- THE FIX: Initialize the explainer as None. We will create it on the first request. ---
+# Initialize the explainer as None for lazy loading
 explainer = None
 
 # --- GLOBAL CONSTANTS ---
@@ -45,7 +45,7 @@ FEATURE_MAP = {
     "CREDIT_INCOME_RATIO": "Credit to Income Ratio",
     "ANNUITY_INCOME_RATIO": "Annuity to Income Ratio", "AMT_CREDIT": "Loan Amount",
     "AMT_ANNUITY": "Monthly Payment", "CODE_GENDER_M": "Gender: Male", "CODE_GENDER_F": "Gender: Female",
-    "NAME_INCOME_TYPE_Working": "Income Type: Working", "FLAG_WORK_PHONE": "Has Work Phone"
+    "NAME_INCOME_TYPE_Working": "Income Type: Working"
 }
 
 NON_INTUITIVE_FEATURES = [
@@ -63,10 +63,10 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    global explainer # Declare that we are using the global explainer variable
+    global explainer 
 
     try:
-        # --- THE FIX: Create the explainer only on the first request ---
+        # Lazily load the SHAP explainer on the first request
         if explainer is None:
             print("Creating SHAP explainer for the first time...")
             explainer = shap.TreeExplainer(model)
@@ -74,6 +74,18 @@ def predict():
 
         input_data = request.get_json()
         
+        # --- THE MISSING PIECE: Business Logic Guardrails ---
+        total_income = input_data.get('AMT_INCOME_TOTAL', 0)
+        annuity = input_data.get('AMT_ANNUITY', 0)
+        
+        if total_income <= 0:
+            return jsonify({"error": "Total annual income must be a positive value."}), 400
+        
+        monthly_income = total_income / 12
+        if annuity > monthly_income:
+            return jsonify({"error": "Monthly payment cannot be greater than monthly income."}), 400
+        
+        # Add default values for fields not on the form
         input_data.setdefault('FLAG_OWN_REALTY', 'Y')
         input_data.setdefault('CNT_CHILDREN', 0)
         
