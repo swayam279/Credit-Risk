@@ -6,3 +6,4 @@ shap
 optuna
 numpy
 pymongo
+gunicorn
